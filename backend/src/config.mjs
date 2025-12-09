@@ -195,7 +195,7 @@ export const abi = [
         type: 'address',
       },
     ],
-    name: 'MululuMinted',
+    name: 'MoluluMinted',
     type: 'event',
   },
   {
@@ -280,6 +280,19 @@ export const abi = [
     type: 'function',
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256',
+      },
+    ],
+    name: 'batchMintMolulu',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [],
     name: 'battleInterval',
     outputs: [
@@ -319,7 +332,7 @@ export const abi = [
         type: 'uint256',
       },
     ],
-    name: 'getMululu',
+    name: 'getMolulu',
     outputs: [
       {
         internalType: 'uint256',
@@ -327,7 +340,7 @@ export const abi = [
         type: 'uint256',
       },
       {
-        internalType: 'enum Molulu.MululuType',
+        internalType: 'enum Molulu.MoluluType',
         name: 'mtype',
         type: 'uint8',
       },
@@ -389,7 +402,7 @@ export const abi = [
   },
   {
     inputs: [],
-    name: 'mintMululu',
+    name: 'mintMolulu',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -402,7 +415,7 @@ export const abi = [
         type: 'uint256',
       },
     ],
-    name: 'mululuStats',
+    name: 'moluluStats',
     outputs: [
       {
         internalType: 'uint256',
@@ -410,7 +423,7 @@ export const abi = [
         type: 'uint256',
       },
       {
-        internalType: 'enum Molulu.MululuType',
+        internalType: 'enum Molulu.MoluluType',
         name: 'mtype',
         type: 'uint8',
       },
@@ -456,7 +469,7 @@ export const abi = [
   },
   {
     inputs: [],
-    name: 'nextMululuId',
+    name: 'nextMoluluId',
     outputs: [
       {
         internalType: 'uint256',
@@ -663,3 +676,14 @@ export const abi = [
     type: 'function',
   },
 ];
+
+export const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+
+export const owner =
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+
+export const degen =
+  '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
+
+export const chad =
+  '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a';
