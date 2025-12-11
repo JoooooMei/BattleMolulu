@@ -10,6 +10,11 @@ export default class MoluluSimulator {
     this.wContract = new ethers.Contract(address, abi, signer);
   }
 
+  async mintMolulu() {
+    const tx = await this.wContract.mintMolulu();
+    return await tx.wait();
+  }
+
   async batchMintMolulu(amount) {
     const tx = await this.wContract.batchMintMolulu(amount);
     return await tx.wait();
