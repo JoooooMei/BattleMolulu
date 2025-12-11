@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Molulu is ERC721, Ownable {
     uint256 public nextMoluluId = 1;
+    uint256 public globalBattleStart;
+    uint256 public battleInterval = 30 days;
 
     enum MoluluType { Fire, Water, Earth, Wind }
 
@@ -19,15 +21,37 @@ contract Molulu is ERC721, Ownable {
 
     mapping(uint256 => MoluluStats) public moluluStats;
 
-    uint256 public globalBattleStart;
-    uint256 public battleInterval = 30 days;
+   
+    struct StatBoost {
+        uint256 HP;
+        uint256 Attack;
+        uint256 Defence;
+    }
+
+    mapping(string => StatBoost) public accessoryBoosts;
+    mapping(string => uint256) public accessoryPrices;
+
 
     event MoluluMinted(uint256 indexed tokenId, address indexed owner);
+    event AccessoryBought(uint256 indexed tokenId, string accessory, address buyer);
 
-    
     constructor() ERC721("Molulu", "MLU") Ownable(msg.sender) {
         globalBattleStart = block.timestamp;
+
+        accessoryBoosts["Hat"] = StatBoost(0, 0, 5);       // +5 Defence
+        accessoryBoosts["Glasses"] = StatBoost(0, 3, 0);   // +3 Attack
+        accessoryBoosts["Cape"] = StatBoost(10, 0, 0);     // +10 HP
+        accessoryBoosts["Boots"] = StatBoost(0, 2, 2);     // +2 Attack, +2 Defence
+        accessoryBoosts["Ring"] = StatBoost(0, 5, 0);      // +5 Attack
+
+        accessoryPrices["Hat"] = 0.01 ether;
+        accessoryPrices["Glasses"] = 0.02 ether;
+        accessoryPrices["Cape"] = 0.03 ether;
+        accessoryPrices["Boots"] = 0.025 ether;
+        accessoryPrices["Ring"] = 0.05 ether;
     }
+
+ 
 
 
     function mintMolulu() external {
@@ -72,6 +96,29 @@ contract Molulu is ERC721, Ownable {
         }
 
         return MoluluStats(HP, mtype, Attack, Defence, acc);
+    }
+
+    function buyAccessory(uint256 tokenId, string memory accessory) external payable {
+        require(_ownerOf(tokenId) != address(0), "Molulu does not exist");
+        require(ownerOf(tokenId) == msg.sender, "You do not own this Molulu");
+
+        uint256 price = accessoryPrices[accessory];
+        require(price > 0, "Accessory does not exist");
+        require(msg.value >= price, "Not enough ETH sent");
+
+        moluluStats[tokenId].Accessories.push(accessory);
+
+        StatBoost memory boost = accessoryBoosts[accessory];
+        moluluStats[tokenId].HP += boost.HP;
+        moluluStats[tokenId].Attack += boost.Attack;
+        moluluStats[tokenId].Defence += boost.Defence;
+
+        //TODO Maybe reqire amount to be correct instead
+        if (msg.value > price) {
+            payable(msg.sender).transfer(msg.value - price);
+        }
+
+        emit AccessoryBought(tokenId, accessory, msg.sender);
     }
 
     function getMolulu(uint256 tokenId) external view returns (
