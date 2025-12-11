@@ -82,7 +82,7 @@ contract Molulu is ERC721, Ownable {
         string[] memory Accessories
     ) 
     {
-        require(_ownerOf(tokenId) != address(0), "Molulu does not exsist");
+        require(_ownerOf(tokenId) != address(0), "Molulu does not exist");
 
         MoluluStats storage stats = moluluStats[tokenId];
         return (stats.HP, stats.mtype, stats.Attack, stats.Defence, stats.Accessories);
