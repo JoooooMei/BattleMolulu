@@ -4,11 +4,23 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Molulu is ERC721, Ownable {
+contract MoluluV2 is ERC721, Ownable {
     uint256 public nextMoluluId = 1;
     uint256 public nextCycleId = 1;
     uint256 public globalBattleStart;
     uint256 public battleInterval = 30 days;
+
+    mapping(uint256 => uint256) public cycleStartBlock;
+    mapping(address => uint256) public liquidityBalance;
+    uint256 public totalLiquidity;
+    event LiquidityAdded(address indexed user, uint256 amount);
+    // ------------------------------
+    
+    event TrainingCycleStarted(
+        uint256 indexed cycleId,
+        uint256 indexed startTimestamp,
+        uint256 indexed startBlock
+    );
 
     enum MoluluType { Fire, Water, Earth, Wind }
 
@@ -17,21 +29,20 @@ contract Molulu is ERC721, Ownable {
         MoluluType mtype;
         uint256 Attack;
         uint256 Defence;
-        string[] Accessories;
     }
 
     mapping(uint256 => MoluluStats) public moluluStats;
 
-   
-    struct StatBoost {
-        uint256 HP;
-        uint256 Attack;
-        uint256 Defence;
+    // ------------------------------
+    // Accessory purchase with timestamp
+    // ------------------------------
+    struct AccessoryPurchase {
+        string accessory;
+        uint256 timestamp;
     }
-
-    mapping(string => StatBoost) public accessoryBoosts;
+    mapping(uint256 => AccessoryPurchase[]) public accessoryHistory;
     mapping(string => uint256) public accessoryPrices;
-
+    // ------------------------------
 
     event MoluluMinted(uint256 indexed tokenId, address indexed owner);
     event AccessoryBought(uint256 indexed tokenId, string accessory, address buyer);
@@ -39,12 +50,7 @@ contract Molulu is ERC721, Ownable {
     constructor() ERC721("Molulu", "MLU") Ownable(msg.sender) {
         globalBattleStart = block.timestamp;
 
-        accessoryBoosts["Hat"] = StatBoost(0, 0, 5);       // +5 Defence
-        accessoryBoosts["Glasses"] = StatBoost(0, 3, 0);   // +3 Attack
-        accessoryBoosts["Cape"] = StatBoost(10, 0, 0);     // +10 HP
-        accessoryBoosts["Boots"] = StatBoost(0, 2, 2);     // +2 Attack, +2 Defence
-        accessoryBoosts["Ring"] = StatBoost(0, 5, 0);      // +5 Attack
-
+        // Only prices are needed now
         accessoryPrices["Hat"] = 0.01 ether;
         accessoryPrices["Glasses"] = 0.02 ether;
         accessoryPrices["Cape"] = 0.03 ether;
@@ -52,19 +58,26 @@ contract Molulu is ERC721, Ownable {
         accessoryPrices["Ring"] = 0.05 ether;
     }
 
-    event TrainingCycleStarted(
-    uint256 indexed cycleId,
-    uint256 indexed startTimestamp,
-    uint256 indexed startBlock
-);
-
     function startNewTrainingCycle() external onlyOwner {
-        globalBattleStart = block.timestamp; // or your current logic
-        uint256 cycleId = (nextCycleId); // maintain a counter
+        globalBattleStart = block.timestamp;
+
+        uint256 cycleId = nextCycleId;
+
+        // Store cycle start block in-state
+        cycleStartBlock[cycleId] = block.number;
+
         emit TrainingCycleStarted(cycleId, block.timestamp, block.number);
+
         nextCycleId++;
     }
 
+    function getCurrentCycleInfo() external view returns (uint256 cycleId, uint256 startBlock) {
+        if (nextCycleId == 1) {
+            return (0, 0); // no cycles yet
+        }
+        uint256 current = nextCycleId - 1;
+        return (current, cycleStartBlock[current]);
+    }
 
     function mintMolulu() external {
         uint256 moluluId = nextMoluluId;
@@ -72,14 +85,12 @@ contract Molulu is ERC721, Ownable {
 
         moluluStats[moluluId] = generateRandomStats(moluluId);
 
-        emit MoluluMinted(moluluId, msg.sender); 
-
+        emit MoluluMinted(moluluId, msg.sender);
         nextMoluluId++;
     }
 
-
     function batchMintMolulu(uint256 amount) external {
-    require(amount > 1, "Amount must be > 1. Use mintMolulu() for single mint");
+        require(amount > 1, "Amount must be > 1. Use mintMolulu() for single mint");
 
         for (uint256 i = 0; i < amount; i++) {
             uint256 moluluId = nextMoluluId;
@@ -88,7 +99,6 @@ contract Molulu is ERC721, Ownable {
             moluluStats[moluluId] = generateRandomStats(moluluId);
 
             emit MoluluMinted(moluluId, msg.sender);
-
             nextMoluluId++;
         }
     }
@@ -101,13 +111,7 @@ contract Molulu is ERC721, Ownable {
         uint256 Defence = 5 + ((rand >> 2) % 26);
         MoluluType mtype = MoluluType(rand % 4);
 
-        string[] memory acc = new string[](rand % 4);
-        string[5] memory allAccessories = ["Hat", "Glasses", "Cape", "Boots", "Ring"];
-        for (uint i = 0; i < acc.length; i++) {
-            acc[i] = allAccessories[(rand >> (i+3)) % allAccessories.length];
-        }
-
-        return MoluluStats(HP, mtype, Attack, Defence, acc);
+        return MoluluStats(HP, mtype, Attack, Defence);
     }
 
     function buyAccessory(uint256 tokenId, string memory accessory) external payable {
@@ -118,14 +122,18 @@ contract Molulu is ERC721, Ownable {
         require(price > 0, "Accessory does not exist");
         require(msg.value >= price, "Not enough ETH sent");
 
-        moluluStats[tokenId].Accessories.push(accessory);
+        // Record purchase with timestamp
+        accessoryHistory[tokenId].push(AccessoryPurchase({
+            accessory: accessory,
+            timestamp: block.timestamp
+        }));
 
-        StatBoost memory boost = accessoryBoosts[accessory];
-        moluluStats[tokenId].HP += boost.HP;
-        moluluStats[tokenId].Attack += boost.Attack;
-        moluluStats[tokenId].Defence += boost.Defence;
+        // Update liquidity tracking
+        liquidityBalance[msg.sender] += price;
+        totalLiquidity += price;
+        emit LiquidityAdded(msg.sender, price);
 
-        //TODO Maybe reqire amount to be correct instead
+        // Refund excess ETH
         if (msg.value > price) {
             payable(msg.sender).transfer(msg.value - price);
         }
@@ -137,34 +145,30 @@ contract Molulu is ERC721, Ownable {
         uint256 HP,
         MoluluType mtype,
         uint256 Attack,
-        uint256 Defence,
-        string[] memory Accessories) {
-        
-        require(_ownerOf(tokenId) != address(0), "Molulu does not exist");
-
+        uint256 Defence
+    ) {
         MoluluStats storage stats = moluluStats[tokenId];
-        return (stats.HP, stats.mtype, stats.Attack, stats.Defence, stats.Accessories);
+        return (stats.HP, stats.mtype, stats.Attack, stats.Defence);
     }
 
-    
-    function getAllMolulus() external view returns (
-        MoluluStats[] memory statsArray, 
-        address[] memory owners) {
+    function getAccessoryHistory(uint256 tokenId) external view returns (AccessoryPurchase[] memory) {
+        return accessoryHistory[tokenId];
+    }
 
-        uint256 total = nextMoluluId - 1; 
+    function getAllMolulus() external view returns (
+        MoluluStats[] memory statsArray,
+        address[] memory owners
+    ) {
+        uint256 total = nextMoluluId - 1;
         statsArray = new MoluluStats[](total);
         owners = new address[](total);
 
         for (uint256 tokenId = 1; tokenId <= total; tokenId++) {
-            address owner = _ownerOf(tokenId); 
-            owners[tokenId - 1] = owner;
+            owners[tokenId - 1] = _ownerOf(tokenId);
             statsArray[tokenId - 1] = moluluStats[tokenId];
         }
     }
 
-
-
-    // Global battle-logik
     function nextBattleStart() public view returns (uint256) {
         uint256 elapsed = block.timestamp - globalBattleStart;
         uint256 intervalsPassed = elapsed / battleInterval;

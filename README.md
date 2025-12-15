@@ -13,7 +13,7 @@ npx hardhat compile
 Deploy contract:
 
 ```zsh
-npx hardhat ignition deploy ./ignition/modules/Molulu.ts --network localhost
+npx hardhat ignition deploy ./ignition/modules/MoluluV2.ts --network localhost
 ```
 
 Deployed to:
