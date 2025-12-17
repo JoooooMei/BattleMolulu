@@ -1,15 +1,18 @@
 import { ethers } from 'ethers';
+import { NonceManager } from 'ethers';
 import { abi, address, addressV2 } from '../config.mjs';
 import MoluluModel from '../models/MoluluModel.mjs';
 
 export default class MoluluRepository {
   constructor(walletAddress) {
-    const provider = new ethers.JsonRpcProvider('http://localhost:8545');
+    this.provider = new ethers.JsonRpcProvider('http://localhost:8545');
 
-    const signer = new ethers.Wallet(walletAddress, provider);
+    // Skapa wallet och wrap med NonceManager
+    const wallet = new ethers.Wallet(walletAddress, this.provider);
+    this.signer = new NonceManager(wallet);
 
-    this.rContract = new ethers.Contract(addressV2, abi, provider);
-    this.wContract = new ethers.Contract(addressV2, abi, signer);
+    this.rContract = new ethers.Contract(addressV2, abi, this.provider);
+    this.wContract = new ethers.Contract(addressV2, abi, this.signer);
   }
 
   async mintMolulu() {
@@ -46,7 +49,6 @@ export default class MoluluRepository {
     for (let id = 1; id < nextId; id++) {
       try {
         const molulu = await this.fetchMolulu({ id });
-
         allMolulus.push(molulu);
       } catch (err) {
         console.log(`Molulu ${id} does not exist.`);
@@ -85,20 +87,24 @@ export default class MoluluRepository {
       'latest'
     );
 
-    const contributions = {};
+    const contributors = {};
 
     for (const event of events) {
       const user = event.args.user;
       const amount = event.args.amount;
 
-      if (!contributions[user]) {
-        contributions[user] = ethers.BigNumber.from(0);
+      if (!contributors[user]) {
+        contributors[user] = {
+          address: user,
+          totalETH: 0n,
+          molulus: [], // fylls senare
+        };
       }
 
-      contributions[user] = contributions[user].add(amount);
+      contributors[user].totalETH += amount;
     }
 
-    return contributions;
+    return Object.values(contributors);
   }
 
   async fetchAllAccessoryPurchases() {
@@ -115,7 +121,7 @@ export default class MoluluRepository {
     const accessoryPurchases = [];
 
     for (const event of events) {
-      const block = await this.rContract.provider.getBlock(event.blockNumber);
+      const block = await this.provider.getBlock(event.blockNumber);
 
       accessoryPurchases.push({
         moluluId: Number(event.args.tokenId),
