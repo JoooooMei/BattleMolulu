@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MoluluV2 is ERC721, Ownable {
     uint256 public nextMoluluId = 1;
-    uint256 public nextCycleId = 1;
+    uint256 public nextCycleId = 2;
     uint256 public globalBattleStart;
     uint256 public battleInterval = 30 days;
 
@@ -33,24 +33,24 @@ contract MoluluV2 is ERC721, Ownable {
 
     mapping(uint256 => MoluluStats) public moluluStats;
 
-    // ------------------------------
-    // Accessory purchase with timestamp
-    // ------------------------------
+
     struct AccessoryPurchase {
         string accessory;
         uint256 timestamp;
     }
     mapping(uint256 => AccessoryPurchase[]) public accessoryHistory;
     mapping(string => uint256) public accessoryPrices;
-    // ------------------------------
+
 
     event MoluluMinted(uint256 indexed tokenId, address indexed owner);
     event AccessoryBought(uint256 indexed tokenId, string accessory, address buyer);
 
     constructor() ERC721("Molulu", "MLU") Ownable(msg.sender) {
         globalBattleStart = block.timestamp;
+        
+        cycleStartBlock[1] = block.number;
+        emit TrainingCycleStarted(1, block.timestamp, block.number);
 
-        // Only prices are needed now
         accessoryPrices["Hat"] = 0.01 ether;
         accessoryPrices["Glasses"] = 0.02 ether;
         accessoryPrices["Cape"] = 0.03 ether;
@@ -63,7 +63,7 @@ contract MoluluV2 is ERC721, Ownable {
 
         uint256 cycleId = nextCycleId;
 
-        // Store cycle start block in-state
+        // Store cycle start block in-state 
         cycleStartBlock[cycleId] = block.number;
 
         emit TrainingCycleStarted(cycleId, block.timestamp, block.number);
@@ -72,9 +72,7 @@ contract MoluluV2 is ERC721, Ownable {
     }
 
     function getCurrentCycleInfo() external view returns (uint256 cycleId, uint256 startBlock) {
-        if (nextCycleId == 1) {
-            return (0, 0); // no cycles yet
-        }
+     
         uint256 current = nextCycleId - 1;
         return (current, cycleStartBlock[current]);
     }

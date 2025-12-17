@@ -18,3 +18,9 @@
 
 # Hardhat coverage reports
 /coverage
+ignition/deployments/chain-31337/artifacts/MoluluV2Module\#MoluluV2.json
+/ignition
+/ignition/deployments
+ignition/deployments/chain-31337/artifacts/MoluluV2Module\#MoluluV2.json
+ignition/deployments/chain-31337/build-info/solc-0_8_28-9cbda67e96205cfed1135655b8f1a155f98ce3f0.json
+ignition/deployments/chain-31337/journal.jsonl
