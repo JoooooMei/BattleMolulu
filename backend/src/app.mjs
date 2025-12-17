@@ -1,15 +1,24 @@
-import MoluluSimulator from './models/Molulu.mjs';
+import Battle from './models/Battle.mjs';
+import MoluluRepository from './repository/MoluluRepository.mjs';
+import { degen, chad, pepe, nancyPelosi } from './config.mjs';
+import GameSimilator from './models/GameSimulator.mjs';
 
-const Molulu = new MoluluSimulator();
+console.log('Start engine!');
 
-const tx = await Molulu.batchMintMolulu(5);
+//const tx = await molulu.batchMintMolulu(5);
+// const allMolulus = await repo.fetchAllMolulus();
 
-console.log('Mint transaction: ', tx);
+// console.log(allMolulus);
 
-const molulu = await Molulu.fetchMolulu({ id: 1 });
+const simulator = new GameSimilator({
+  players: [degen, chad, pepe, nancyPelosi],
+});
 
-console.log('fetched molulu', molulu);
+simulator.createWallets();
+// simulator.mintMolusuls();
+// simulator.buyAccessory();
 
-const allMolulus = await Molulu.fetchAllMolulus();
+// simulator.getLiquidityContributors();
+simulator.allAccessoryPurchases();
 
-console.log(allMolulus);
+simulator.participatingMolulus();
