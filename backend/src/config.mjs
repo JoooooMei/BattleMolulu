@@ -1662,3 +1662,31 @@ export const pepe =
 
 export const nancyPelosi =
   '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a';
+
+export const ACCESSORY_BOOSTS = {
+  Hat: {
+    hp: 0,
+    attack: 0,
+    defence: 5,
+  },
+  Glasses: {
+    hp: 0,
+    attack: 3,
+    defence: 0,
+  },
+  Cape: {
+    hp: 10,
+    attack: 0,
+    defence: 0,
+  },
+  Boots: {
+    hp: 0,
+    attack: 2,
+    defence: 2,
+  },
+  Ring: {
+    hp: 0,
+    attack: 5,
+    defence: 0,
+  },
+};

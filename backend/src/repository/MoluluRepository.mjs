@@ -25,7 +25,7 @@ export default class MoluluRepository {
     return await tx.wait();
   }
 
-  async fetchMolulu({ id }) {
+  async fetchMoluluOLD({ id }) {
     const stats = await this.rContract.getMolulu(id);
     const owner = await this.rContract.ownerOf(id);
 
@@ -38,6 +38,12 @@ export default class MoluluRepository {
       Accessories: stats.Accessories,
       type: ['Fire', 'Water', 'Earth', 'Wind'][stats.mtype],
     });
+
+    return molulu;
+  }
+
+  async fetchMolulu(id) {
+    const molulu = await this.rContract.getMolulu(id);
 
     return molulu;
   }
@@ -60,8 +66,6 @@ export default class MoluluRepository {
 
   async buyAccessory(id, accessory, price) {
     try {
-      console.log('Connecting to blockchain');
-
       const tx = await this.wContract.buyAccessory(id, accessory, {
         value: price,
       });
@@ -97,7 +101,7 @@ export default class MoluluRepository {
         contributors[user] = {
           address: user,
           totalETH: 0n,
-          molulus: [], // fylls senare
+          molulus: [],
         };
       }
 
@@ -132,5 +136,10 @@ export default class MoluluRepository {
     }
 
     return accessoryPurchases;
+  }
+
+  async newTrainingCycle() {
+    const tx = await this.wContract.startNewTrainingCycle();
+    return tx.wait(); // returnerar receipt
   }
 }

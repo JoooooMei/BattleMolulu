@@ -1,4 +1,4 @@
-import MoluluRepository from '../repository/MoluluRepository.mjs';
+import { calculateBoost } from '../utils/battleUtils.mjs';
 
 export const getTournamentSnapshot = async (repo) => {
   const contributors = await repo.fetchLiquidityContributors();
@@ -88,8 +88,83 @@ export const getTournamentStartTime = async (repo) => {
   return block.timestamp;
 };
 
-export const getParticipatingMolulus = async (repo, tournamentStart) => {
-  const snapshot = await getEligibleMolulus(repo, tournamentStart);
+// export const getParticipatingMolulus = async (repo, tournamentStart) => {
+//   const purchases = await repo.fetchAllAccessoryPurchases();
 
-  return snapshot.flatMap((user) => user.molulus);
+//   const moluluMap = new Map();
+
+//   for (const p of purchases) {
+//     if (p.timestamp > tournamentStart) continue;
+
+//     if (!moluluMap.has(p.moluluId)) {
+//       moluluMap.set(p.moluluId, []);
+//     }
+
+//     moluluMap.get(p.moluluId).push({
+//       accessory: p.accessory,
+//       timestamp: p.timestamp,
+//     });
+//   }
+
+//   return [...moluluMap.entries()].map(([id, accessories]) => ({
+//     id,
+//     accessories,
+//   }));
+// };
+
+export const getParticipatingMolulus = async (repo, tournamentStart) => {
+  const purchases = await repo.fetchAllAccessoryPurchases();
+
+  const moluluMap = new Map();
+
+  for (const p of purchases) {
+    if (p.timestamp < tournamentStart) continue;
+
+    if (!moluluMap.has(p.moluluId)) {
+      moluluMap.set(p.moluluId, {
+        id: p.moluluId,
+        owner: p.owner,
+        accessories: [],
+      });
+    }
+
+    moluluMap.get(p.moluluId).accessories.push({
+      accessory: p.accessory,
+      timestamp: p.timestamp,
+    });
+  }
+
+  return [...moluluMap.values()];
+};
+
+export const getMolulu = async (repo, id) => {
+  const types = ['Fire', 'Water', 'Earth', 'Wind'];
+  const response = await repo.fetchMolulu(id);
+
+  const [hp, typeIndex, attack, defence] = response.map(Number);
+
+  return {
+    id,
+    hp,
+    type: types[typeIndex],
+    attack,
+    defence,
+  };
+};
+
+export const boostMolulus = async (repo, participants, now) => {
+  let moluluBaseStats = [];
+
+  for (let i = 0; i < participants.length; i++) {
+    const molulu = await getMolulu(repo, participants[i].id);
+
+    moluluBaseStats.push(molulu);
+  }
+
+  console.log('Participating Molulus base stats', moluluBaseStats);
+
+  const boostedMolulus = calculateBoost(moluluBaseStats, participants, now);
+  console.log('After boost: ', boostedMolulus);
+
+  return boostedMolulus;
 };

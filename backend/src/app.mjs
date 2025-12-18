@@ -16,9 +16,11 @@ const simulator = new GameSimilator({
 
 simulator.createWallets();
 // simulator.mintMolusuls();
-// simulator.buyAccessory();
+//simulator.buyAccessory();
 
+// simulator.allAccessoryPurchases();
+
+// simulator.participatingMolulus();
 // simulator.getLiquidityContributors();
-simulator.allAccessoryPurchases();
-
-simulator.participatingMolulus();
+simulator.boostBeforeTournament({ now: new Date('2025-12-25').getTime() });
+// simulator.newCycle();

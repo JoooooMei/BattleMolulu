@@ -1,23 +1,22 @@
 import { parseEther } from 'ethers';
 import MoluluRepository from '../repository/MoluluRepository.mjs';
-
+import { owner } from '../config.mjs';
 import {
+  boostMolulus,
   getEligibleMolulus,
   getParticipatingMolulus,
   getTournamentStartTime,
 } from '../services/TournamentService.mjs';
-import { destructParticipants } from '../utils/helpers.mjs';
 
 export default class GameSimilator {
   constructor({ players }) {
     this.players = players;
     this.wallets = [];
-    this.moluluIDs = [];
 
-    //prices
+    this.boostedMolulus = [];
 
     this.payHat = parseEther('0.01');
-    this.buyGlasses = parseEther('0.2');
+    this.payGlasses = parseEther('0.2');
     this.payCape = parseEther('0.03');
     this.payBoots = parseEther('0.025');
     this.payRing = parseEther('0.05');
@@ -41,11 +40,16 @@ export default class GameSimilator {
   }
 
   async buyAccessory() {
-    console.log('Buying accessory');
-    // const userOne = await this.wallets[0].buyAccessory(1, 'Hat', this.payHat);
-    const userTwo = await this.wallets[1].buyAccessory(2, 'Ring', this.payRing);
-
-    console.log('bought Ring', userTwo);
+    console.log('Buying accessories');
+    await this.wallets[0].buyAccessory(1, 'Hat', this.payHat);
+    await this.wallets[0].buyAccessory(1, 'Ring', this.payRing);
+    await this.wallets[1].buyAccessory(2, 'Hat', this.payHat);
+    await this.wallets[1].buyAccessory(2, 'Cape', this.payCape);
+    await this.wallets[2].buyAccessory(3, 'Ring', this.payRing);
+    await this.wallets[2].buyAccessory(3, 'Cape', this.payCape);
+    await this.wallets[3].buyAccessory(4, 'Ring', this.payRing);
+    await this.wallets[3].buyAccessory(4, 'Cape', this.payCape);
+    await this.wallets[3].buyAccessory(4, 'Glasses', this.payGlasses);
   }
 
   async getLiquidityContributors() {
@@ -66,9 +70,7 @@ export default class GameSimilator {
     const startTime = await getTournamentStartTime(repo);
     const participating = await getEligibleMolulus(repo, startTime);
 
-    //console.log('Participants:', JSON.stringify(participants, null, 2));
     console.dir(participating, { depth: null });
-    console.dir(participants, { depth: null });
   }
 
   async participatingMolulus() {
@@ -76,7 +78,33 @@ export default class GameSimilator {
     const startTime = await getTournamentStartTime(repo);
     const participating = await getParticipatingMolulus(repo, startTime);
 
-    console.log('Participating Molulus: ', participating);
-    console.dir(participating, { depth: null });
+    return participating;
+    // console.log('Participating Molulus: ');
+    // console.dir(participating, { depth: null });
+  }
+
+  async newCycle() {
+    try {
+      const ownerRepo = new MoluluRepository(owner);
+
+      const receipt = await ownerRepo.newTrainingCycle();
+
+      console.log('new cycle: ', receipt);
+    } catch (error) {
+      console.error('Failed to start new cycle:', error);
+    }
+  }
+
+  async boostBeforeTournament({ now }) {
+    if (!now) {
+      now = Date.now();
+    }
+
+    const participants = await this.participatingMolulus();
+
+    const repo = new MoluluRepository(owner);
+    const boosted = await boostMolulus(repo, participants, now);
+
+    this.boostedMolulus = boosted;
   }
 }
