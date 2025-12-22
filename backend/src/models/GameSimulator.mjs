@@ -5,8 +5,10 @@ import {
   boostMolulus,
   getEligibleMolulus,
   getParticipatingMolulus,
-  getTournamentStartTime,
+  getTraingCycleStartTime,
 } from '../services/TournamentService.mjs';
+import ChainlinkRepository from '../repository/ChainlinkRepository.mjs';
+import { getRandom } from '../services/chainlinkService.mjs';
 
 export default class GameSimilator {
   constructor({ players }) {
@@ -20,6 +22,8 @@ export default class GameSimilator {
     this.payCape = parseEther('0.03');
     this.payBoots = parseEther('0.025');
     this.payRing = parseEther('0.05');
+
+    this.VRF_RANDOM;
   }
 
   async createWallets() {
@@ -27,8 +31,6 @@ export default class GameSimilator {
       const wallet = new MoluluRepository(player);
       this.wallets.push(wallet);
     });
-
-    // console.log(this.wallets);
   }
 
   async mintMolusuls() {
@@ -67,7 +69,7 @@ export default class GameSimilator {
 
   async participants() {
     const repo = this.wallets[0];
-    const startTime = await getTournamentStartTime(repo);
+    const startTime = await getTraingCycleStartTime(repo);
     const participating = await getEligibleMolulus(repo, startTime);
 
     console.dir(participating, { depth: null });
@@ -75,7 +77,7 @@ export default class GameSimilator {
 
   async participatingMolulus() {
     const repo = this.wallets[0];
-    const startTime = await getTournamentStartTime(repo);
+    const startTime = await getTraingCycleStartTime(repo);
     const participating = await getParticipatingMolulus(repo, startTime);
 
     return participating;
@@ -106,5 +108,15 @@ export default class GameSimilator {
     const boosted = await boostMolulus(repo, participants, now);
 
     this.boostedMolulus = boosted;
+  }
+
+  async newVRFSeed() {
+    const repo = new ChainlinkRepository(owner);
+
+    const VRF_RANDOM = await getRandom(repo);
+
+    console.log('got random back:', VRF_RANDOM);
+
+    this.VRF_RANDOM = VRF_RANDOM;
   }
 }

@@ -1,13 +1,12 @@
 import { ethers } from 'ethers';
 import { NonceManager } from 'ethers';
-import { abi, address, addressV2 } from '../config.mjs';
+import { abi, addressV2 } from '../config.mjs';
 import MoluluModel from '../models/MoluluModel.mjs';
 
 export default class MoluluRepository {
   constructor(walletAddress) {
     this.provider = new ethers.JsonRpcProvider('http://localhost:8545');
 
-    // Skapa wallet och wrap med NonceManager
     const wallet = new ethers.Wallet(walletAddress, this.provider);
     this.signer = new NonceManager(wallet);
 
@@ -140,6 +139,6 @@ export default class MoluluRepository {
 
   async newTrainingCycle() {
     const tx = await this.wContract.startNewTrainingCycle();
-    return tx.wait(); // returnerar receipt
+    return tx.wait();
   }
 }

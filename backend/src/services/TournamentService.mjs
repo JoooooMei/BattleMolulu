@@ -77,7 +77,7 @@ export const getEligibleMolulus = async (repo, tournamentStart) => {
     .filter((u) => u.molulus.length > 0);
 };
 
-export const getTournamentStartTime = async (repo) => {
+export const getTraingCycleStartTime = async (repo) => {
   const startBlock = await repo.getCycleStartBlock();
 
   const block = await repo.provider.getBlock(startBlock);

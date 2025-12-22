@@ -15,12 +15,16 @@ const simulator = new GameSimilator({
 });
 
 simulator.createWallets();
-// simulator.mintMolusuls();
-//simulator.buyAccessory();
+// await simulator.mintMolusuls();
+// await simulator.buyAccessory();
 
-// simulator.allAccessoryPurchases();
+// await simulator.allAccessoryPurchases();
 
 // simulator.participatingMolulus();
 // simulator.getLiquidityContributors();
-simulator.boostBeforeTournament({ now: new Date('2025-12-25').getTime() });
+// simulator.boostBeforeTournament({ now: new Date('2025-12-25').getTime() });
 // simulator.newCycle();
+
+await simulator.newVRFSeed();
+
+console.log('random is set:', simulator.VRF_RANDOM);
