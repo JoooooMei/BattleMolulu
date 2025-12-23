@@ -1,5 +1,4 @@
-import Battle from './models/Battle.mjs';
-import MoluluRepository from './repository/MoluluRepository.mjs';
+import BattleRoyale from './models/BattleRoyale.mjs';
 import { degen, chad, pepe, nancyPelosi } from './config.mjs';
 import GameSimilator from './models/GameSimulator.mjs';
 
@@ -12,6 +11,7 @@ console.log('Start engine!');
 
 const simulator = new GameSimilator({
   players: [degen, chad, pepe, nancyPelosi],
+  battleDate: '2026-01-30',
 });
 
 simulator.createWallets();
@@ -22,9 +22,24 @@ simulator.createWallets();
 
 // simulator.participatingMolulus();
 // simulator.getLiquidityContributors();
-// simulator.boostBeforeTournament({ now: new Date('2025-12-25').getTime() });
+await simulator.boostBeforeTournament();
 // simulator.newCycle();
 
 await simulator.newVRFSeed();
 
 console.log('random is set:', simulator.VRF_RANDOM);
+
+const tournament = new BattleRoyale({
+  participants: simulator.boostedMolulus,
+  vrf: simulator.VRF_RANDOM.VRF,
+});
+
+console.log('Tournament crreated: ', tournament);
+
+tournament.createBattleTable();
+
+console.log('shuffled table: ', tournament.table);
+
+const round = tournament.playRound();
+
+console.log('round results ', round);

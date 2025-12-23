@@ -6,12 +6,12 @@ import {
   getEligibleMolulus,
   getParticipatingMolulus,
   getTraingCycleStartTime,
-} from '../services/TournamentService.mjs';
+} from '../services/tournamentService.mjs';
 import ChainlinkRepository from '../repository/ChainlinkRepository.mjs';
 import { getRandom } from '../services/chainlinkService.mjs';
 
 export default class GameSimilator {
-  constructor({ players }) {
+  constructor({ players, battleDate }) {
     this.players = players;
     this.wallets = [];
 
@@ -23,6 +23,7 @@ export default class GameSimilator {
     this.payBoots = parseEther('0.025');
     this.payRing = parseEther('0.05');
 
+    this.battleDate = new Date(battleDate).getTime();
     this.VRF_RANDOM;
   }
 
@@ -76,31 +77,22 @@ export default class GameSimilator {
   }
 
   async participatingMolulus() {
-    const repo = this.wallets[0];
+    const repo = new MoluluRepository(owner);
     const startTime = await getTraingCycleStartTime(repo);
     const participating = await getParticipatingMolulus(repo, startTime);
 
     return participating;
-    // console.log('Participating Molulus: ');
-    // console.dir(participating, { depth: null });
   }
 
   async newCycle() {
-    try {
-      const ownerRepo = new MoluluRepository(owner);
+    const ownerRepo = new MoluluRepository(owner);
+    const receipt = await ownerRepo.newTrainingCycle();
 
-      const receipt = await ownerRepo.newTrainingCycle();
-
-      console.log('new cycle: ', receipt);
-    } catch (error) {
-      console.error('Failed to start new cycle:', error);
-    }
+    console.log('new cycle: ', receipt);
   }
 
-  async boostBeforeTournament({ now }) {
-    if (!now) {
-      now = Date.now();
-    }
+  async boostBeforeTournament() {
+    const now = this.battleDate;
 
     const participants = await this.participatingMolulus();
 
@@ -111,11 +103,10 @@ export default class GameSimilator {
   }
 
   async newVRFSeed() {
+    console.log('VRF function');
     const repo = new ChainlinkRepository(owner);
 
     const VRF_RANDOM = await getRandom(repo);
-
-    console.log('got random back:', VRF_RANDOM);
 
     this.VRF_RANDOM = VRF_RANDOM;
   }

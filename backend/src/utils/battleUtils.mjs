@@ -1,26 +1,48 @@
 import { ACCESSORY_BOOSTS } from '../config.mjs';
-
-export const getNumericSeed = (seed) => {
-  return parseInt(seed.slice(2, 18), 16); // first 16 hex digits
-};
+import crypto from 'crypto';
 
 export const shuffleParticipants = ({ participants, random }) => {
   const result = [...participants];
 
-  const pseudoRandom = () => {
-    // simple xorshift PRNG
-    random ^= random << 13;
-    random ^= random >> 17;
-    random ^= random << 5;
-    return ((random < 0 ? ~random + 1 : random) % 1e9) / 1e9;
+  let seed = BigInt(random);
+  const MOD = BigInt(2) ** BigInt(256);
+
+  const next = () => {
+    // xorshift256
+    seed ^= seed << 13n;
+    seed ^= seed >> 7n;
+    seed ^= seed << 17n;
+    seed %= MOD;
+    return seed;
   };
 
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(pseudoRandom() * (i + 1));
+    const j = Number(next() % BigInt(i + 1));
     [result[i], result[j]] = [result[j], result[i]];
   }
 
   return result;
+};
+
+export const deriveMatchSeed = (vrf, matchIndex, round = 0) => {
+  const input = JSON.stringify({
+    vrf: vrf.toString(),
+    round,
+    matchIndex,
+  });
+
+  return BigInt('0x' + crypto.createHash('sha256').update(input).digest('hex'));
+};
+
+export const makePRNG = (seed) => {
+  let state = seed;
+
+  return () => {
+    state ^= state << 13n;
+    state ^= state >> 7n;
+    state ^= state << 17n;
+    return Number(state % 1_000_000n) / 1_000_000;
+  };
 };
 
 const getDaysSince = (timestamp, nowMs) => {
@@ -36,14 +58,11 @@ export const calculateBoost = (moluluBaseStats, participants, now) => {
 
     for (const item of participant.accessories) {
       const accessory = ACCESSORY_BOOSTS[item.accessory];
-      // console.log('Processing accessory:', item.accessory, 'Boost:', accessory);
-      if (!accessory) continue;
 
       const days = Math.min(
         getDaysSince(item.timestamp, now),
         accessory.maxDays || Infinity
       );
-      // console.log('Days since purchase:', days);
 
       if (days <= 0) continue;
 
@@ -51,7 +70,7 @@ export const calculateBoost = (moluluBaseStats, participants, now) => {
 
       for (const stat in accessory) {
         const add = accessory[stat] * days;
-        console.log(`Adding ${add} to ${stat}`);
+
         boosted[stat] += add;
         boosted.boost[stat] += add;
       }
