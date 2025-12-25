@@ -34,12 +34,14 @@ const tournament = new BattleRoyale({
   vrf: simulator.VRF_RANDOM.VRF,
 });
 
-console.log('Tournament crreated: ', tournament);
+// console.log('Tournament created: ', tournament);
 
-tournament.createBattleTable();
+// tournament.createBattleTable();
 
-console.log('shuffled table: ', tournament.table);
+// console.log('shuffled table: ', tournament.shuffledTable);
 
-const round = tournament.playRound();
+// const round = tournament.playRound();
 
-console.log('round results ', round);
+// console.log('round results ', round);
+
+tournament.playTournament();

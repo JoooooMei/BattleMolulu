@@ -8,7 +8,6 @@ export const shuffleParticipants = ({ participants, random }) => {
   const MOD = BigInt(2) ** BigInt(256);
 
   const next = () => {
-    // xorshift256
     seed ^= seed << 13n;
     seed ^= seed >> 7n;
     seed ^= seed << 17n;

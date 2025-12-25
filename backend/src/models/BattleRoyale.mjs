@@ -8,6 +8,7 @@ export default class BattleRoyale {
   constructor({ participants, vrf }) {
     this.random = vrf;
     this.participants = participants;
+    this.round = 1;
 
     this.shuffledTable = [];
 
@@ -19,8 +20,6 @@ export default class BattleRoyale {
   }
 
   createBattleTable() {
-    console.log('this.participants: ', this.participants);
-    console.log('this.random', this.random);
     const shuffled = shuffleParticipants({
       participants: this.participants,
       random: this.random,
@@ -40,11 +39,7 @@ export default class BattleRoyale {
     this.shuffledTable = table;
   }
 
-  playRound(round = 0) {
-    if (!this.shuffledTable.length) {
-      this.createBattleTable();
-    }
-
+  playRound(round = this.round) {
     const roundResults = [];
 
     for (
@@ -66,7 +61,12 @@ export default class BattleRoyale {
       roundResults.push(result);
     }
 
-    return roundResults;
+    // Extrahera vinnare för nästa runda
+    const winners = roundResults.map((r) => r.winner);
+
+    console.log(`Round ${round} winners:`, winners);
+
+    return { roundResults, winners };
   }
 
   resolveMatch(match, rng) {
@@ -84,5 +84,23 @@ export default class BattleRoyale {
     const winner = aScore >= bScore ? a : b;
 
     return { winner, match, rolls: { aScore, bScore } };
+  }
+
+  playTournament() {
+    while (this.participants.length > 1) {
+      console.log(`--- Round ${this.round} ---`);
+
+      this.createBattleTable();
+      const { winners } = this.playRound();
+
+      // Uppdatera deltagarna för nästa runda direkt i klassens property
+      this.participants = winners;
+
+      this.round++;
+    }
+
+    this.winner = this.participants[0];
+    console.log('Tournament winner:', this.winner);
+    return this.winner;
   }
 }
