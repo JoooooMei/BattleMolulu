@@ -47,6 +47,16 @@ export default class MoluluRepository {
     return molulu;
   }
 
+  async fetchOwnerOf(id) {
+    const owner = await this.rContract.ownerOf(id);
+
+    return owner;
+  }
+
+  async getLiquidityForUser(address) {
+    return await this.rContract.liquidityBalance(address);
+  }
+
   async fetchAllMolulus() {
     const nextId = await this.rContract.nextMoluluId();
     const allMolulus = [];
@@ -138,7 +148,11 @@ export default class MoluluRepository {
   }
 
   async newTrainingCycle() {
-    const tx = await this.wContract.startNewTrainingCycle();
-    return tx.wait();
+    try {
+      const tx = await this.wContract.startNewTrainingCycle();
+      return tx.wait();
+    } catch (error) {
+      console.log('Something whent wrong: ', error);
+    }
   }
 }
