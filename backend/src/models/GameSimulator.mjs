@@ -14,6 +14,7 @@ export default class GameSimilator {
   constructor({ players, battleDate }) {
     this.players = players;
     this.wallets = [];
+    this.tournamentWinner = undefined;
 
     this.boostedMolulus = [];
 
@@ -109,5 +110,18 @@ export default class GameSimilator {
     const VRF_RANDOM = await getRandom(repo);
 
     this.VRF_RANDOM = VRF_RANDOM;
+  }
+
+  async declareWinner(molulu) {
+    const repo = new MoluluRepository(owner);
+
+    console.log('MOLULU ID', molulu.id);
+
+    const address = await repo.fetchOwnerOf(molulu.id);
+    const liquidityProvided = await repo.getLiquidityForUser(address);
+
+    const winningMolulu = { ...molulu, address, liquidityProvided };
+
+    console.log('Winner: ', winningMolulu);
   }
 }

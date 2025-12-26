@@ -45,3 +45,5 @@ const tournament = new BattleRoyale({
 // console.log('round results ', round);
 
 tournament.playTournament();
+
+simulator.declareWinner(tournament.winner);
