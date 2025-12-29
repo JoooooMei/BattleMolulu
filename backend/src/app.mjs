@@ -1,6 +1,8 @@
 import BattleRoyale from './models/BattleRoyale.mjs';
-import { degen, chad, pepe, nancyPelosi } from './config.mjs';
+import { owner, degen, chad, pepe, nancyPelosi } from './config.mjs';
 import GameSimilator from './models/GameSimulator.mjs';
+import YieldVaultRepository from './repository/YieldVaultRepository.mjs';
+import { formatEther } from 'ethers';
 
 console.log('Start engine!');
 
@@ -11,11 +13,11 @@ console.log('Start engine!');
 
 const simulator = new GameSimilator({
   players: [degen, chad, pepe, nancyPelosi],
-  battleDate: '2026-01-30',
+  battleDate: '2026-06-30',
 });
 
 simulator.createWallets();
-// await simulator.mintMolusuls();
+//await simulator.mintMolusuls();
 // await simulator.buyAccessory();
 
 // await simulator.allAccessoryPurchases();
@@ -47,3 +49,11 @@ const tournament = new BattleRoyale({
 tournament.playTournament();
 
 simulator.declareWinner(tournament.winner);
+
+const vaultRepo = new YieldVaultRepository(owner);
+
+const balance = await vaultRepo.getTotalBalance();
+
+console.log('Balance Vault', formatEther(balance));
+
+await simulator.addYield('0.1');

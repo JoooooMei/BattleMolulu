@@ -1,6 +1,12 @@
 export const abi = [
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_yieldVault',
+        type: 'address',
+      },
+    ],
     stateMutability: 'nonpayable',
     type: 'constructor',
   },
@@ -491,46 +497,6 @@ export const abi = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'getAllMolulus',
-    outputs: [
-      {
-        components: [
-          {
-            internalType: 'uint256',
-            name: 'HP',
-            type: 'uint256',
-          },
-          {
-            internalType: 'enum MoluluV2.MoluluType',
-            name: 'mtype',
-            type: 'uint8',
-          },
-          {
-            internalType: 'uint256',
-            name: 'Attack',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'Defence',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct MoluluV2.MoluluStats[]',
-        name: 'statsArray',
-        type: 'tuple[]',
-      },
-      {
-        internalType: 'address[]',
-        name: 'owners',
-        type: 'address[]',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
     inputs: [
       {
         internalType: 'uint256',
@@ -965,6 +931,79 @@ export const abi = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [],
+    name: 'yieldVault',
+    outputs: [
+      {
+        internalType: 'contract IYieldVault',
+        name: '',
+        type: 'address',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
+
+export const abi_mock_yield_vault = [
+  {
+    inputs: [],
+    name: 'addYield',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'deposit',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalBalance',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalDeposits',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256',
+      },
+    ],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    stateMutability: 'payable',
+    type: 'receive',
+  },
 ];
 
 export const abi_mock_consumer_VRF = [
@@ -1060,8 +1099,9 @@ export const abi_mock_consumer_VRF = [
   },
 ];
 
-export const addressV2 = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
-export const addressVRFConsumer = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+export const addressV2 = '0xb185E9f6531BA9877741022C92CE858cDCc5760E';
+export const addressMockYield = '0x71a0b8A2245A9770A4D887cE1E4eCc6C1d4FF28c';
+export const addressVRFConsumer = '0xAe120F0df055428E45b264E7794A18c54a2a3fAF';
 
 export const owner =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';

@@ -57,6 +57,10 @@ export default class MoluluRepository {
     return await this.rContract.liquidityBalance(address);
   }
 
+  async getTotalLiquidity() {
+    return await this.rContract.totalLiquidity();
+  }
+
   async fetchAllMolulus() {
     const nextId = await this.rContract.nextMoluluId();
     const allMolulus = [];

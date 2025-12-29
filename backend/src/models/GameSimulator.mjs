@@ -9,6 +9,8 @@ import {
 } from '../services/tournamentService.mjs';
 import ChainlinkRepository from '../repository/ChainlinkRepository.mjs';
 import { getRandom } from '../services/chainlinkService.mjs';
+import { getWinnerPrize } from '../services/YieldCalculator.mjs';
+import YieldVaultRepository from '../repository/YieldVaultRepository.mjs';
 
 export default class GameSimilator {
   constructor({ players, battleDate }) {
@@ -19,7 +21,7 @@ export default class GameSimilator {
     this.boostedMolulus = [];
 
     this.payHat = parseEther('0.01');
-    this.payGlasses = parseEther('0.2');
+    this.payGlasses = parseEther('0.02');
     this.payCape = parseEther('0.03');
     this.payBoots = parseEther('0.025');
     this.payRing = parseEther('0.05');
@@ -45,15 +47,15 @@ export default class GameSimilator {
 
   async buyAccessory() {
     console.log('Buying accessories');
-    await this.wallets[0].buyAccessory(1, 'Hat', this.payHat);
-    await this.wallets[0].buyAccessory(1, 'Ring', this.payRing);
-    await this.wallets[1].buyAccessory(2, 'Hat', this.payHat);
-    await this.wallets[1].buyAccessory(2, 'Cape', this.payCape);
-    await this.wallets[2].buyAccessory(3, 'Ring', this.payRing);
-    await this.wallets[2].buyAccessory(3, 'Cape', this.payCape);
-    await this.wallets[3].buyAccessory(4, 'Ring', this.payRing);
-    await this.wallets[3].buyAccessory(4, 'Cape', this.payCape);
-    await this.wallets[3].buyAccessory(4, 'Glasses', this.payGlasses);
+    await this.wallets[0].buyAccessory(1, 'Hat', this.payHat); // 0.01
+    await this.wallets[0].buyAccessory(1, 'Ring', this.payRing); // 0.05
+    await this.wallets[1].buyAccessory(2, 'Hat', this.payHat); // 0.01
+    await this.wallets[1].buyAccessory(2, 'Cape', this.payCape); // 0.03
+    await this.wallets[2].buyAccessory(3, 'Ring', this.payRing); // 0.05
+    await this.wallets[2].buyAccessory(3, 'Cape', this.payCape); // 0.03
+    await this.wallets[3].buyAccessory(4, 'Ring', this.payRing); // 0.05
+    await this.wallets[3].buyAccessory(4, 'Cape', this.payCape); // 0.03
+    await this.wallets[3].buyAccessory(4, 'Glasses', this.payGlasses); // 0.02
   }
 
   async getLiquidityContributors() {
@@ -112,6 +114,20 @@ export default class GameSimilator {
     this.VRF_RANDOM = VRF_RANDOM;
   }
 
+  async addYield(eth) {
+    const vaultRepo = new YieldVaultRepository(owner);
+    await vaultRepo.addYield(parseEther(eth));
+  }
+
+  async calcWinnerPrize(address) {
+    const moluluRepo = new MoluluRepository(owner);
+    const vaultRepo = new YieldVaultRepository(owner);
+    return await getWinnerPrize({
+      moluluRepo,
+      vaultRepo,
+    });
+  }
+
   async declareWinner(molulu) {
     const repo = new MoluluRepository(owner);
 
@@ -120,7 +136,9 @@ export default class GameSimilator {
     const address = await repo.fetchOwnerOf(molulu.id);
     const liquidityProvided = await repo.getLiquidityForUser(address);
 
-    const winningMolulu = { ...molulu, address, liquidityProvided };
+    const prizeMoney = await this.calcWinnerPrize();
+
+    const winningMolulu = { ...molulu, address, liquidityProvided, prizeMoney };
 
     console.log('Winner: ', winningMolulu);
   }
