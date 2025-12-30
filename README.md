@@ -1,6 +1,6 @@
 ### Setup
 
-Install all dependencies and run:
+Install all dependencies in root and backend folder. Then run in root:
 
 Node:
 
@@ -26,13 +26,15 @@ npx hardhat ignition deploy ./ignition/modules/MoluluV2.ts --network localhost
 
 ### Run simulation
 
+In backend folder:
+
 - npm start will run app.mjs.
 
 ```zsh
 npm start
 ```
 
-##### Explanation of what happens:
+#### Explanation of what happens:
 
 All the functions in this explanation will be executed automatically when "npm start" command is runned
 
@@ -40,7 +42,7 @@ All the functions in this explanation will be executed automatically when "npm s
 
 ---
 
-1.  A new instrance of the game simultor is created. Players in the simulator should not be changed because the simulator is depending on them but end date can be changed. The date needs to be in the future for the creatures to be boosted.
+1.  A new instance of the game simultor is created. Players in the simulator should not be changed because the simulator is depending on them but end date can be changed. The date needs to be in the future for the creatures to be boosted.
 
 ```js
 const simulator = new GameSimilator({
