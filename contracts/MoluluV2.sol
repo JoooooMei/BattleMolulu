@@ -3,8 +3,12 @@ pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol"; 
+import "./interface/IYieldVault.sol"; 
 
-contract MoluluV2 is ERC721, Ownable {
+contract MoluluV2 is ERC721, Ownable, ReentrancyGuard {
+    receive() external payable {}
+
     uint256 public nextMoluluId = 1;
     uint256 public nextCycleId = 2;
     uint256 public globalBattleStart;
@@ -13,9 +17,13 @@ contract MoluluV2 is ERC721, Ownable {
     mapping(uint256 => uint256) public cycleStartBlock;
     mapping(address => uint256) public liquidityBalance;
     uint256 public totalLiquidity;
+
+    IYieldVault public yieldVault;
+
     event LiquidityAdded(address indexed user, uint256 amount);
+    event PrincipalWithdrawn(address indexed user, uint256 amount);
+
     // ------------------------------
-    
     event TrainingCycleStarted(
         uint256 indexed cycleId,
         uint256 indexed startTimestamp,
@@ -33,23 +41,27 @@ contract MoluluV2 is ERC721, Ownable {
 
     mapping(uint256 => MoluluStats) public moluluStats;
 
-
     struct AccessoryPurchase {
         string accessory;
         uint256 timestamp;
     }
+
     mapping(uint256 => AccessoryPurchase[]) public accessoryHistory;
     mapping(string => uint256) public accessoryPrices;
 
-
     event MoluluMinted(uint256 indexed tokenId, address indexed owner);
     event AccessoryBought(uint256 indexed tokenId, string accessory, address buyer);
+    event CycleFinalized(address indexed winner, uint256 prizeMoney);
 
-    constructor() ERC721("Molulu", "MLU") Ownable(msg.sender) {
+    constructor(address _yieldVault)
+        ERC721("Molulu", "MLU")
+        Ownable(msg.sender)
+    {
+        yieldVault = IYieldVault(_yieldVault);
+
         globalBattleStart = block.timestamp;
-        
         cycleStartBlock[1] = block.number;
-        emit TrainingCycleStarted(1, block.timestamp, block.number);
+        emit TrainingCycleStarted(1, block.timestamp, block.number); 
 
         accessoryPrices["Hat"] = 0.01 ether;
         accessoryPrices["Glasses"] = 0.02 ether;
@@ -60,19 +72,13 @@ contract MoluluV2 is ERC721, Ownable {
 
     function startNewTrainingCycle() external onlyOwner {
         globalBattleStart = block.timestamp;
-
         uint256 cycleId = nextCycleId;
-
-        // Store cycle start block in-state 
         cycleStartBlock[cycleId] = block.number;
-
         emit TrainingCycleStarted(cycleId, block.timestamp, block.number);
-
         nextCycleId++;
     }
 
     function getCurrentCycleInfo() external view returns (uint256 cycleId, uint256 startBlock) {
-     
         uint256 current = nextCycleId - 1;
         return (current, cycleStartBlock[current]);
     }
@@ -80,36 +86,34 @@ contract MoluluV2 is ERC721, Ownable {
     function mintMolulu() external {
         uint256 moluluId = nextMoluluId;
         _safeMint(msg.sender, moluluId);
-
         moluluStats[moluluId] = generateRandomStats(moluluId);
-
         emit MoluluMinted(moluluId, msg.sender);
         nextMoluluId++;
     }
 
     function batchMintMolulu(uint256 amount) external {
-        require(amount > 1, "Amount must be > 1. Use mintMolulu() for single mint");
-
+        require(amount > 1, "Amount must be > 1");
         for (uint256 i = 0; i < amount; i++) {
             uint256 moluluId = nextMoluluId;
             _safeMint(msg.sender, moluluId);
-
             moluluStats[moluluId] = generateRandomStats(moluluId);
-
             emit MoluluMinted(moluluId, msg.sender);
             nextMoluluId++;
         }
     }
 
-    function generateRandomStats(uint256 tokenId) internal view returns (MoluluStats memory) {
+    function generateRandomStats(uint256 tokenId)
+        internal
+        view
+        returns (MoluluStats memory)
+    {
         uint256 rand = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, tokenId)));
-
-        uint256 HP = 50 + (rand % 101);
-        uint256 Attack = 10 + ((rand >> 1) % 41);
-        uint256 Defence = 5 + ((rand >> 2) % 26);
-        MoluluType mtype = MoluluType(rand % 4);
-
-        return MoluluStats(HP, mtype, Attack, Defence);
+        return MoluluStats(
+            50 + (rand % 101),
+            MoluluType(rand % 4),
+            10 + ((rand >> 1) % 41),
+            5 + ((rand >> 2) % 26)
+        );
     }
 
     function buyAccessory(uint256 tokenId, string memory accessory) external payable {
@@ -120,18 +124,20 @@ contract MoluluV2 is ERC721, Ownable {
         require(price > 0, "Accessory does not exist");
         require(msg.value >= price, "Not enough ETH sent");
 
-        // Record purchase with timestamp
-        accessoryHistory[tokenId].push(AccessoryPurchase({
-            accessory: accessory,
-            timestamp: block.timestamp
-        }));
+        accessoryHistory[tokenId].push(
+            AccessoryPurchase({
+                accessory: accessory,
+                timestamp: block.timestamp
+            })
+        );
 
-        // Update liquidity tracking
+        yieldVault.deposit{ value: price }();
+
         liquidityBalance[msg.sender] += price;
         totalLiquidity += price;
+
         emit LiquidityAdded(msg.sender, price);
 
-        // Refund excess ETH
         if (msg.value > price) {
             payable(msg.sender).transfer(msg.value - price);
         }
@@ -153,18 +159,33 @@ contract MoluluV2 is ERC721, Ownable {
         return accessoryHistory[tokenId];
     }
 
-    function getAllMolulus() external view returns (
-        MoluluStats[] memory statsArray,
-        address[] memory owners
-    ) {
-        uint256 total = nextMoluluId - 1;
-        statsArray = new MoluluStats[](total);
-        owners = new address[](total);
+    function finalizeCycle(address winner) external onlyOwner nonReentrant {
+        uint256 vaultBalance = yieldVault.totalBalance();
+        require(vaultBalance > totalLiquidity, "No yield to pay");
 
-        for (uint256 tokenId = 1; tokenId <= total; tokenId++) {
-            owners[tokenId - 1] = _ownerOf(tokenId);
-            statsArray[tokenId - 1] = moluluStats[tokenId];
-        }
+        uint256 prizeMoney = vaultBalance - totalLiquidity;
+
+        yieldVault.withdraw(prizeMoney);
+
+        (bool sentWinner, ) = winner.call{ value: prizeMoney }("");
+        require(sentWinner, "Prize transfer failed");
+
+        emit CycleFinalized(winner, prizeMoney);
+    }
+
+    function withdrawPrincipal() external nonReentrant {
+        uint256 amount = liquidityBalance[msg.sender];
+        require(amount > 0, "No principal to withdraw");
+
+        liquidityBalance[msg.sender] = 0;
+        totalLiquidity -= amount;
+
+        yieldVault.withdraw(amount);
+
+        (bool sent, ) = msg.sender.call{ value: amount }("");
+        require(sent, "Transfer failed");
+
+        emit PrincipalWithdrawn(msg.sender, amount);
     }
 
     function nextBattleStart() public view returns (uint256) {

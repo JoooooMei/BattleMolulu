@@ -77,7 +77,6 @@ export default class BattleRoyale {
 
     const [a, b] = match;
 
-    // exempel: attack * slump
     const aScore = a.attack * rng();
     const bScore = b.attack * rng();
 
@@ -93,7 +92,6 @@ export default class BattleRoyale {
       this.createBattleTable();
       const { winners } = this.playRound();
 
-      // Uppdatera deltagarna för nästa runda direkt i klassens property
       this.participants = winners;
 
       this.round++;

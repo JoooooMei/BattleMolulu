@@ -14,6 +14,16 @@ export default class MoluluRepository {
     this.wContract = new ethers.Contract(addressV2, abi, this.signer);
   }
 
+  async getConractOwner() {
+    try {
+      const ownerAddress = await this.rContract.owner();
+      return ownerAddress;
+    } catch (error) {
+      console.error('Error fetching owner:', error);
+      return null;
+    }
+  }
+
   async mintMolulu() {
     const tx = await this.wContract.mintMolulu();
     return await tx.wait();
@@ -55,6 +65,10 @@ export default class MoluluRepository {
 
   async getLiquidityForUser(address) {
     return await this.rContract.liquidityBalance(address);
+  }
+
+  async getTotalLiquidity() {
+    return await this.rContract.totalLiquidity();
   }
 
   async fetchAllMolulus() {
@@ -153,6 +167,18 @@ export default class MoluluRepository {
       return tx.wait();
     } catch (error) {
       console.log('Something whent wrong: ', error);
+    }
+  }
+
+  async finalizeCycle(winnerAddress) {
+    try {
+      const tx = await this.wContract.finalizeCycle(winnerAddress);
+
+      console.log('tx: ', tx);
+      const receipt = await tx.wait();
+      return receipt;
+    } catch (err) {
+      console.error('FinalizeCycle failed', err);
     }
   }
 }
