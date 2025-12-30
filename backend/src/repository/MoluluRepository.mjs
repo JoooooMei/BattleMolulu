@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, parseEther } from 'ethers';
 import { NonceManager } from 'ethers';
 import { abi, addressV2 } from '../config.mjs';
 import MoluluModel from '../models/MoluluModel.mjs';
@@ -25,12 +25,23 @@ export default class MoluluRepository {
   }
 
   async mintMolulu() {
-    const tx = await this.wContract.mintMolulu();
+    const mintPrice = parseEther('0.1');
+
+    const tx = await this.wContract.mintMolulu({
+      value: mintPrice,
+    });
+
     return await tx.wait();
   }
 
   async batchMintMolulu(amount) {
-    const tx = await this.wContract.batchMintMolulu(amount);
+    const mintPrice = parseEther('0.1');
+    const totalPrice = mintPrice.mul(amount);
+
+    const tx = await this.wContract.batchMintMolulu(amount, {
+      value: totalPrice,
+    });
+
     return await tx.wait();
   }
 

@@ -1,3 +1,4 @@
+// const abi is the moluluV2 abi
 export const abi = [
   {
     inputs: [
@@ -361,6 +362,19 @@ export const abi = [
     type: 'event',
   },
   {
+    inputs: [],
+    name: 'MINT_PRICE',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [
       {
         internalType: 'uint256',
@@ -455,7 +469,7 @@ export const abi = [
     ],
     name: 'batchMintMolulu',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
     type: 'function',
   },
   {
@@ -683,7 +697,20 @@ export const abi = [
     inputs: [],
     name: 'mintMolulu',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'mintRevenue',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
     type: 'function',
   },
   {
@@ -715,6 +742,11 @@ export const abi = [
         internalType: 'uint256',
         name: 'Defence',
         type: 'uint256',
+      },
+      {
+        internalType: 'bool',
+        name: 'isSpecial',
+        type: 'bool',
       },
     ],
     stateMutability: 'view',

@@ -24,6 +24,8 @@ npx hardhat ignition deploy ./ignition/modules/MockConsumerVRF.ts --network loca
 npx hardhat ignition deploy ./ignition/modules/MoluluV2.ts --network localhost
 ```
 
+After deploy, add abi for all the contracts and contract addresses in backend/config.
+
 ### Run simulation
 
 In backend folder:

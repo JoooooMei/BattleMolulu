@@ -9,6 +9,8 @@ import "./interface/IYieldVault.sol";
 contract MoluluV2 is ERC721, Ownable, ReentrancyGuard {
     receive() external payable {}
 
+    uint256 public constant MINT_PRICE = 0.1 ether;
+    uint256 public mintRevenue;
     uint256 public nextMoluluId = 1;
     uint256 public nextCycleId = 2;
     uint256 public globalBattleStart;
@@ -37,6 +39,7 @@ contract MoluluV2 is ERC721, Ownable, ReentrancyGuard {
         MoluluType mtype;
         uint256 Attack;
         uint256 Defence;
+        bool isSpecial;
     }
 
     mapping(uint256 => MoluluStats) public moluluStats;
@@ -83,23 +86,34 @@ contract MoluluV2 is ERC721, Ownable, ReentrancyGuard {
         return (current, cycleStartBlock[current]);
     }
 
-    function mintMolulu() external {
+    function mintMolulu() external payable {
+        require(msg.value == MINT_PRICE, "Mint costs 0.1 ETH");
+
         uint256 moluluId = nextMoluluId;
         _safeMint(msg.sender, moluluId);
         moluluStats[moluluId] = generateRandomStats(moluluId);
+
+        mintRevenue += msg.value;
+
         emit MoluluMinted(moluluId, msg.sender);
         nextMoluluId++;
     }
 
-    function batchMintMolulu(uint256 amount) external {
+
+    function batchMintMolulu(uint256 amount) external payable {
         require(amount > 1, "Amount must be > 1");
+        require(msg.value == amount * MINT_PRICE, "Incorrect ETH amount");
+
         for (uint256 i = 0; i < amount; i++) {
             uint256 moluluId = nextMoluluId;
             _safeMint(msg.sender, moluluId);
             moluluStats[moluluId] = generateRandomStats(moluluId);
+
             emit MoluluMinted(moluluId, msg.sender);
             nextMoluluId++;
         }
+
+        mintRevenue += msg.value;
     }
 
     function generateRandomStats(uint256 tokenId)
@@ -107,14 +121,27 @@ contract MoluluV2 is ERC721, Ownable, ReentrancyGuard {
         view
         returns (MoluluStats memory)
     {
-        uint256 rand = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, tokenId)));
+        uint256 rand = uint256(
+            keccak256(
+                abi.encodePacked(
+                    block.timestamp,
+                    msg.sender,
+                    tokenId
+                )
+            )
+        );
+
+        bool isSpecial = (rand % 1000 == 0); 
+
         return MoluluStats(
             50 + (rand % 101),
             MoluluType(rand % 4),
             10 + ((rand >> 1) % 41),
-            5 + ((rand >> 2) % 26)
+            5 + ((rand >> 2) % 26),
+            isSpecial
         );
     }
+
 
     function buyAccessory(uint256 tokenId, string memory accessory) external payable {
         require(_ownerOf(tokenId) != address(0), "Molulu does not exist");
