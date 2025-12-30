@@ -17,7 +17,8 @@ const simulator = new GameSimilator({
 });
 
 simulator.createWallets();
-//await simulator.mintMolusuls();
+
+// await simulator.mintMolusuls();
 // await simulator.buyAccessory();
 
 // await simulator.allAccessoryPurchases();
@@ -25,7 +26,7 @@ simulator.createWallets();
 // simulator.participatingMolulus();
 // simulator.getLiquidityContributors();
 await simulator.boostBeforeTournament();
-// simulator.newCycle();
+// await simulator.newCycle();
 
 await simulator.newVRFSeed();
 
@@ -46,9 +47,11 @@ const tournament = new BattleRoyale({
 
 // console.log('round results ', round);
 
+await simulator.addYield('0.5');
+
 tournament.playTournament();
 
-simulator.declareWinner(tournament.winner);
+await simulator.declareWinner(tournament.winner);
 
 const vaultRepo = new YieldVaultRepository(owner);
 
@@ -56,4 +59,4 @@ const balance = await vaultRepo.getTotalBalance();
 
 console.log('Balance Vault', formatEther(balance));
 
-await simulator.addYield('0.1');
+await simulator.payoutPrizeMoney();
