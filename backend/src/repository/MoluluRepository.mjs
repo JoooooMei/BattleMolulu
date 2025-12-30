@@ -174,7 +174,6 @@ export default class MoluluRepository {
     try {
       const tx = await this.wContract.finalizeCycle(winnerAddress);
 
-      console.log('tx: ', tx);
       const receipt = await tx.wait();
       return receipt;
     } catch (err) {
