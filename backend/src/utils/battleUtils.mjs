@@ -65,8 +65,6 @@ export const calculateBoost = (moluluBaseStats, participants, now) => {
 
       if (days <= 0) continue;
 
-      console.log('Processing accessory:', item.accessory, 'Boost:', accessory);
-
       for (const stat in accessory) {
         const add = accessory[stat] * days;
 

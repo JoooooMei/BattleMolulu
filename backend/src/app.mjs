@@ -1,51 +1,27 @@
 import BattleRoyale from './models/BattleRoyale.mjs';
 import { owner, degen, chad, pepe, nancyPelosi } from './config.mjs';
 import GameSimilator from './models/GameSimulator.mjs';
-import YieldVaultRepository from './repository/YieldVaultRepository.mjs';
-import { formatEther } from 'ethers';
 
 console.log('Start engine!');
-
-//const tx = await molulu.batchMintMolulu(5);
-// const allMolulus = await repo.fetchAllMolulus();
-
-// console.log(allMolulus);
 
 const simulator = new GameSimilator({
   players: [degen, chad, pepe, nancyPelosi],
   battleDate: '2026-06-30',
 });
 
-simulator.createWallets();
+await simulator.createWallets();
 
-// await simulator.mintMolusuls();
-// await simulator.buyAccessory();
+await simulator.mintMolusuls();
+await simulator.buyAccessory();
 
-// await simulator.allAccessoryPurchases();
-
-// simulator.participatingMolulus();
-// simulator.getLiquidityContributors();
 await simulator.boostBeforeTournament();
-// await simulator.newCycle();
 
 await simulator.newVRFSeed();
-
-console.log('random is set:', simulator.VRF_RANDOM);
 
 const tournament = new BattleRoyale({
   participants: simulator.boostedMolulus,
   vrf: simulator.VRF_RANDOM.VRF,
 });
-
-// console.log('Tournament created: ', tournament);
-
-// tournament.createBattleTable();
-
-// console.log('shuffled table: ', tournament.shuffledTable);
-
-// const round = tournament.playRound();
-
-// console.log('round results ', round);
 
 await simulator.addYield('0.5');
 
@@ -53,10 +29,6 @@ tournament.playTournament();
 
 await simulator.declareWinner(tournament.winner);
 
-const vaultRepo = new YieldVaultRepository(owner);
-
-const balance = await vaultRepo.getTotalBalance();
-
-console.log('Balance Vault', formatEther(balance));
-
 await simulator.payoutPrizeMoney();
+
+// await simulator.newCycle();

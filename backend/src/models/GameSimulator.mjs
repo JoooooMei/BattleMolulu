@@ -145,12 +145,17 @@ export default class GameSimilator {
 
   async payoutPrizeMoney() {
     if (this.tournamentWinner) {
-      console.log('WINNER IN PAYOUT FUNCTION', this.tournamentWinner);
-
       const repo = new MoluluRepository(owner);
       const receipt = await repo.finalizeCycle(this.tournamentWinner.address);
 
-      console.log('Payout prize money receipt: ', receipt);
+      const payout = {
+        blockHash: receipt.blockHash,
+        blockNumber: receipt.blockNumber,
+        amountPayed: this.tournamentWinner.prizeMoney,
+        to: this.tournamentWinner.address,
+      };
+
+      console.log('Payout prize money receipt: ', payout);
     } else {
       console.log('NO WINNER YET');
     }

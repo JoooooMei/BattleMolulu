@@ -135,9 +135,7 @@ export default class MoluluRepository {
   }
 
   async fetchAllAccessoryPurchases() {
-    console.log('Fetching... ');
     const startBlock = await this.getCycleStartBlock();
-    console.log('Startblock: ', startBlock);
 
     const events = await this.rContract.queryFilter(
       this.rContract.filters.AccessoryBought(),
